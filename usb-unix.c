@@ -340,15 +340,24 @@ open_device(const char *uri,		/* I - Device URI */
   */
 
   if (!strncmp(uri, "usb:/dev/", 9))
-#ifdef __linux
   {
-   /*
-    * Do not allow direct devices anymore...
+   /* Allow direct access to the device node (up to scripts to set it right)
     */
 
-    errno = ENODEV;
-    return (-1);
+    if (*use_bc)
+      fd = open(uri + 4, O_RDWR | O_EXCL);
+    else
+      fd = -1;
+
+    if (fd < 0)
+    {
+      fd      = open(uri + 4, O_WRONLY | O_EXCL);
+      *use_bc = 0;
+    }
+
+    return (fd);
   }
+#ifdef __linux
   else if (!strncmp(uri, "usb://", 6))
   {
    /*
@@ -443,14 +452,6 @@ open_device(const char *uri,		/* I - Device URI */
     }
   }
 #elif defined(__sun) && defined(ECPPIOC_GETDEVID)
-  {
-   /*
-    * Do not allow direct devices anymore...
-    */
-
-    errno = ENODEV;
-    return (-1);
-  }
   else if (!strncmp(uri, "usb://", 6))
   {
    /*
@@ -534,21 +535,6 @@ open_device(const char *uri,		/* I - Device URI */
     errno = ENODEV;
 
     return (-1);
-  }
-#else
-  {
-    if (*use_bc)
-      fd = open(uri + 4, O_RDWR | O_EXCL);
-    else
-      fd = -1;
-
-    if (fd < 0)
-    {
-      fd      = open(uri + 4, O_WRONLY | O_EXCL);
-      *use_bc = 0;
-    }
-
-    return (fd);
   }
 #endif /* __linux */
   else
