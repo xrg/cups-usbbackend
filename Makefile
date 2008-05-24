@@ -119,7 +119,7 @@ uninstall:
 
 usb2:	usb.o ieee1284.o runloop.o
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -lcups -o $@ $?
+	$(CC) $(LDFLAGS) -lcups -o $@ $^
 usb.o:	usb.c usb-darwin.c usb-unix.c
 
 
