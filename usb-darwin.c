@@ -1,5 +1,5 @@
 /*
-* "$Id: usb-darwin.c 7460 2008-04-16 02:19:54Z mike $"
+* "$Id$"
 *
 * Copyright 2005-2008 Apple Inc. All rights reserved.
 *
@@ -605,7 +605,7 @@ print_device(const char *uri,		/* I - Device URI */
 
 	  if (errno != EAGAIN || errno != EINTR)
 	  {
-	    _cupsLangPrintError(_("ERROR: Unable to read print data"));
+	    perror("ERROR: Unable to read print data");
 	    return CUPS_BACKEND_STOP;
 	  }
 
@@ -1122,7 +1122,7 @@ static Boolean find_device_cb(void *refcon,
   if (!keepLooking && g.status_timer != NULL)
   {
     fputs("STATE: -offline-error\n", stderr);
-    _cupsLangPuts(stderr, _("INFO: Printer is now online.\n"));
+    _cupsLangPuts(stderr, _("INFO: Printer is now on-line.\n"));
     CFRunLoopRemoveTimer(CFRunLoopGetCurrent(), g.status_timer, kCFRunLoopDefaultMode);
     CFRelease(g.status_timer);
     g.status_timer = NULL;
@@ -1140,7 +1140,7 @@ static void status_timer_cb(CFRunLoopTimerRef timer,
 			    void *info)
 {
   fputs("STATE: +offline-error\n", stderr);
-  _cupsLangPuts(stderr, _("INFO: Printer is currently offline.\n"));
+  _cupsLangPuts(stderr, _("INFO: Printer is currently off-line.\n"));
 
   if (getenv("CLASS") != NULL)
   {
@@ -1705,7 +1705,7 @@ static void setup_cfLanguage(void)
     langArray = CFArrayCreate(kCFAllocatorDefault, (const void **)lang, sizeof(lang) / sizeof(lang[0]), &kCFTypeArrayCallBacks);
 
     CFPreferencesSetAppValue(CFSTR("AppleLanguages"), langArray, kCFPreferencesCurrentApplication);
-    fprintf(stderr, "DEBUG: usb: AppleLanguages = \"%s\"\n", requestedLang);
+    DEBUG_printf((stderr, "DEBUG: usb: AppleLanguages = \"%s\"\n", requestedLang));
 
     CFRelease(lang[0]);
     CFRelease(langArray);
@@ -1801,7 +1801,7 @@ static void run_ppc_backend(int argc,
 
       execv("/usr/libexec/cups/backend/usb", my_argv);
 
-      _cupsLangPrintError(_("ERROR: Unable to exec /usr/libexec/cups/backend/usb"));
+      perror("/usr/libexec/cups/backend/usb");
       exit(errno);
     }
     else if (child_pid < 0)
@@ -1810,7 +1810,7 @@ static void run_ppc_backend(int argc,
       * Error - couldn't fork a new process!
       */
 
-      _cupsLangPrintError(_("ERROR: Unable to fork"));
+      perror("fork");
       exit(errno);
     }
 
@@ -2036,5 +2036,5 @@ static void get_device_id(cups_sc_status_t *status,
 
 
 /*
- * End of "$Id: usb-darwin.c 7460 2008-04-16 02:19:54Z mike $".
+ * End of "$Id$".
  */

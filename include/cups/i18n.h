@@ -23,7 +23,7 @@
  */
 
 #  include <stdio.h>
-#  include "transcode.h"
+#  include <cups/transcode.h>
 
 #  ifdef __cplusplus
 extern "C" {

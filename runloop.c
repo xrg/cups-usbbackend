@@ -1,5 +1,5 @@
 /*
- * "$Id: runloop.c 7524 2008-05-01 21:02:27Z mike $"
+ * "$Id$"
  *
  *   Common run loop APIs for the Common UNIX Printing System (CUPS).
  *
@@ -24,17 +24,13 @@
  * Include necessary headers.
  */
 
-#include <limits.h>
+#include "backend-private.h"
 #ifdef __hpux
 #  include <sys/time.h>
 #else
 #  include <sys/select.h>
 #endif /* __hpux */
 
-#include <cups/backend.h>
-#include <cups/cups.h>
-#include <string.h>
-#include "backend-private.h"
 
 /*
  * 'backendDrainOutput()' - Drain pending print data to the device.
@@ -145,13 +141,10 @@ backendDrainOutput(int print_fd,	/* I - Print file descriptor */
 
 ssize_t					/* O - Total bytes on success, -1 on error */
 backendRunLoop(
-    int         print_fd,		/* I - Print file descriptor */
-    int         device_fd,		/* I - Device file descriptor */
-    int         snmp_fd,		/* I - SNMP socket or -1 if none */
-    http_addr_t *addr,			/* I - Address of device */
-    int         use_bc,			/* I - Use back-channel? */
-    void        (*side_cb)(int, int, int, http_addr_t *, int))
-					/* I - Side-channel callback */
+    int  print_fd,			/* I - Print file descriptor */
+    int  device_fd,			/* I - Device file descriptor */
+    int  use_bc,			/* I - Use back-channel? */
+    void (*side_cb)(int, int, int))	/* I - Side-channel callback */
 {
   int		nfds;			/* Maximum file descriptor value + 1 */
   fd_set	input,			/* Input set for reading */
@@ -165,18 +158,15 @@ backendRunLoop(
   char		print_buffer[8192],	/* Print data buffer */
 		*print_ptr,		/* Pointer into print data buffer */
 		bc_buffer[1024];	/* Back-channel data buffer */
-  struct timeval timeout;		/* Timeout for select() */
-  time_t	curtime,		/* Current time */
-		snmp_update = 0;
 #if defined(HAVE_SIGACTION) && !defined(HAVE_SIGSET)
   struct sigaction action;		/* Actions for POSIX signals */
 #endif /* HAVE_SIGACTION && !HAVE_SIGSET */
 
 
   fprintf(stderr,
-          "DEBUG: backendRunLoop(print_fd=%d, device_fd=%d, snmp_fd=%d, "
-	  "addr=%p, use_bc=%d, side_cb=%p)\n",
-          print_fd, device_fd, snmp_fd, addr, use_bc, side_cb);
+          "DEBUG: backendRunLoop(print_fd=%d, device_fd=%d, use_bc=%d, "
+	  "side_cb=%p)\n",
+          print_fd, device_fd, use_bc, side_cb);
 
  /*
   * If we are printing data from a print driver on stdin, ignore SIGTERM
@@ -231,10 +221,7 @@ backendRunLoop(
 
     if (use_bc || side_cb)
     {
-      timeout.tv_sec  = 5;
-      timeout.tv_usec = 0;
-
-      if (select(nfds, &input, &output, NULL, &timeout) < 0)
+      if (select(nfds, &input, &output, NULL, NULL) < 0)
       {
        /*
 	* Pause printing to clear any pending errors...
@@ -243,7 +230,7 @@ backendRunLoop(
 	if (errno == ENXIO && offline != 1)
 	{
 	  fputs("STATE: +offline-error\n", stderr);
-	  _cupsLangPuts(stderr, _("INFO: Printer is currently offline.\n"));
+	  _cupsLangPuts(stderr, _("INFO: Printer is currently off-line.\n"));
 	  offline = 1;
 	}
 	else if (errno == EINTR && total_bytes == 0)
@@ -263,7 +250,7 @@ backendRunLoop(
     */
 
     if (side_cb && FD_ISSET(CUPS_SC_FD, &input))
-      (*side_cb)(print_fd, device_fd, snmp_fd, addr, use_bc);
+      (*side_cb)(print_fd, device_fd, use_bc);
 
    /*
     * Check if we have back-channel data ready...
@@ -365,7 +352,7 @@ backendRunLoop(
 	if (offline)
 	{
 	  fputs("STATE: -offline-error\n", stderr);
-	  _cupsLangPuts(stderr, _("INFO: Printer is now online.\n"));
+	  _cupsLangPuts(stderr, _("INFO: Printer is now on-line.\n"));
 	  offline = 0;
 	}
 
@@ -375,18 +362,6 @@ backendRunLoop(
 	print_ptr   += bytes;
 	total_bytes += bytes;
       }
-    }
-
-   /*
-    * Do SNMP updates periodically...
-    */
-
-    if (snmp_fd >= 0 && time(&curtime) >= snmp_update)
-    {
-      if (backendSNMPSupplies(snmp_fd, addr, NULL, NULL))
-        snmp_update = INT_MAX;
-      else
-        snmp_update = curtime + 5;
     }
   }
 
@@ -399,5 +374,5 @@ backendRunLoop(
 
 
 /*
- * End of "$Id: runloop.c 7524 2008-05-01 21:02:27Z mike $".
+ * End of "$Id$".
  */

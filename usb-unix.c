@@ -1,5 +1,5 @@
 /*
- * "$Id: usb-unix.c 7405 2008-03-26 15:33:49Z mike $"
+ * "$Id$"
  *
  *   USB port backend for the Common UNIX Printing System (CUPS).
  *
@@ -28,8 +28,30 @@
  * Include necessary headers.
  */
 
-#include "ieee1284.c"
 #include <sys/select.h>
+
+#include "backend-private.h"
+
+#ifdef __linux
+#  include <sys/ioctl.h>
+#  include <linux/lp.h>
+#  define IOCNR_GET_DEVICE_ID		1
+#  define LPIOC_GET_DEVICE_ID(len)	_IOC(_IOC_READ, 'P', IOCNR_GET_DEVICE_ID, len)
+#  include <linux/parport.h>
+#  include <linux/ppdev.h>
+#  include <unistd.h>
+#  include <string.h>
+#  include <fcntl.h>
+#endif /* __linux */
+
+#ifdef __sun
+#  ifdef __sparc
+#    include <sys/ecppio.h>
+#  else
+#    include <sys/ioccom.h>
+#    include <sys/ecppsys.h>
+#  endif /* __sparc */
+#endif /* __sun */
 
 
 /*
@@ -37,8 +59,7 @@
  */
 
 static int	open_device(const char *uri, int *use_bc);
-static void	side_cb(int print_fd, int device_fd, int snmp_fd,
-		        http_addr_t *addr, int use_bc);
+static void	side_cb(int print_fd, int device_fd, int use_bc);
 
 
 /*
@@ -174,7 +195,7 @@ print_device(const char *uri,		/* I - Device URI */
       lseek(print_fd, 0, SEEK_SET);
     }
 
-    tbytes = backendRunLoop(print_fd, device_fd, -1, NULL, use_bc, side_cb);
+    tbytes = backendRunLoop(print_fd, device_fd, use_bc, side_cb);
 
     if (print_fd != 0 && tbytes >= 0)
       _cupsLangPrintf(stderr,
@@ -282,7 +303,7 @@ list_devices(void)
   }
 #elif defined(__hpux)
 #elif defined(__osf)
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
   int   i;                      /* Looping var */
   char  device[255];            /* Device filename */
 
@@ -543,20 +564,15 @@ open_device(const char *uri,		/* I - Device URI */
  */
 
 static void
-side_cb(int         print_fd,		/* I - Print file */
-        int         device_fd,		/* I - Device file */
-        int         snmp_fd,		/* I - SNMP socket (unused) */
-	http_addr_t *addr,		/* I - Device address (unused) */
-	int         use_bc)		/* I - Using back-channel? */
+side_cb(int print_fd,			/* I - Print file */
+        int device_fd,			/* I - Device file */
+	int use_bc)			/* I - Using back-channel? */
 {
   cups_sc_command_t	command;	/* Request command */
   cups_sc_status_t	status;		/* Request/response status */
   char			data[2048];	/* Request/response data */
   int			datalen;	/* Request/response data size */
 
-
-  (void)snmp_fd;
-  (void)addr;
 
   datalen = sizeof(data);
 
@@ -611,5 +627,5 @@ side_cb(int         print_fd,		/* I - Print file */
 
 
 /*
- * End of "$Id: usb-unix.c 7405 2008-03-26 15:33:49Z mike $".
+ * End of "$Id$".
  */
