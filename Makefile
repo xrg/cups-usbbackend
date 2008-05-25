@@ -20,7 +20,7 @@
 TARGETS	=	usb2
 OBJS	=	usb.o ieee1284.o
 
-CFLAGS += -DDEBUG
+# CFLAGS += -DDEBUG
 
 #
 # Make all targets...
@@ -129,7 +129,7 @@ usb.o:	usb.c usb-darwin.c usb-unix.c
 
 .c.o:
 	echo Compiling $<...
-	$(CC) $(ARCHFLAGS) -DDEBUG $(OPTIM) $(ALL_CFLAGS) -D_GNU_SOURCE \
+	$(CC) $(ARCHFLAGS) $(OPTIM) $(ALL_CFLAGS) -D_GNU_SOURCE \
 		-I. -I./include/ -c $<
 
 #
