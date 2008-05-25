@@ -57,6 +57,10 @@
 #endif /* __sun */
 
 
+/* Here we define our name! */
+#define USB_SCHEME "usb2"
+#define USB_SCHEME_LEN 4
+
 /*
  * Local functions...
  */
@@ -272,7 +276,7 @@ list_devices(void)
 
     if (!backendGetDeviceID(fd, device_id, sizeof(device_id),
                             make_model, sizeof(make_model),
-			    "usb", device_uri, sizeof(device_uri)))
+			    USB_SCHEME, device_uri, sizeof(device_uri)))
       printf("direct %s \"%s\" \"%s USB #%d\" \"%s\"\n", device_uri,
 	     make_model, make_model, i + 1, device_id);
 
@@ -302,8 +306,8 @@ list_devices(void)
 		
 		if (!backendGetDeviceID(fd, device_id, sizeof(device_id),
 					make_model, sizeof(make_model),
-					"usb", NULL, 0))
-		printf("direct usb:%s \"%s\" \"%s USB #%d\"\n", device,
+					USB_SCHEME, NULL, 0))
+		printf("direct " USB_SCHEME ":%s \"%s\" \"%s USB #%d\"\n", device,
 			make_model, make_model, i + 1);
 
 		close(fd);
@@ -333,7 +337,7 @@ list_devices(void)
     {
       if (!backendGetDeviceID(fd, device_id, sizeof(device_id),
                               make_model, sizeof(make_model),
-			      "usb", device_uri, sizeof(device_uri)))
+			      USB_SCHEME, device_uri, sizeof(device_uri)))
 	printf("direct %s \"%s\" \"%s USB #%d\" \"%s\"\n", device_uri,
 	       make_model, make_model, i + 1, device_id);
 
@@ -351,11 +355,11 @@ list_devices(void)
   {
     sprintf(device, "/dev/ulpt%d", i);
     if (!access(device, 0))
-      printf("direct usb:%s \"Unknown\" \"USB Printer #%d\"\n", device, i + 1);
+      printf("direct " USB_SCHEME ":%s \"Unknown\" \"USB Printer #%d\"\n", device, i + 1);
 
     sprintf(device, "/dev/unlpt%d", i);
     if (!access(device, 0))
-      printf("direct usb:%s \"Unknown\" \"USB Printer #%d (no reset)\"\n", device, i + 1);
+      printf("direct " USB_SCHEME ":%s \"Unknown\" \"USB Printer #%d (no reset)\"\n", device, i + 1);
   }
 #endif
 }
@@ -378,26 +382,26 @@ open_device(const char *uri,		/* I - Device URI */
   * number and/or make/model.
   */
 
-  if (!strncmp(uri, "usb:/dev/", 9))
+  if (!strncmp(uri, USB_SCHEME ":/dev/", USB_SCHEME_LEN+6))
   {
    /* Allow direct access to the device node (up to scripts to set it right)
     */
 
     if (*use_bc)
-      fd = open(uri + 4, O_RDWR | O_EXCL);
+      fd = open(uri + USB_SCHEME_LEN, O_RDWR | O_EXCL);
     else
       fd = -1;
 
     if (fd < 0)
     {
-      fd      = open(uri + 4, O_WRONLY | O_EXCL);
+      fd      = open(uri + USB_SCHEME_LEN, O_WRONLY | O_EXCL);
       *use_bc = 0;
     }
 
     return (fd);
   }
 #ifdef __linux
-  else if (!strncmp(uri, "usb://", 6))
+  else if (!strncmp(uri, USB_SCHEME "://",USB_SCHEME_LEN +3))
   {
    /*
     * For Linux, try looking up the device serial number or model...
@@ -443,7 +447,7 @@ open_device(const char *uri,		/* I - Device URI */
 	{
 	  backendGetDeviceID(fd, device_id, sizeof(device_id),
                              make_model, sizeof(make_model),
-			     "usb", device_uri, sizeof(device_uri));
+			     USB_SCHEME, device_uri, sizeof(device_uri));
 	}
 	else
 	{
@@ -491,7 +495,7 @@ open_device(const char *uri,		/* I - Device URI */
     }
   }
 #elif defined(__sun) && defined(ECPPIOC_GETDEVID)
-  else if (!strncmp(uri, "usb://", 6))
+  else if (!strncmp(uri, USB_SCHEME "://", USB_SCHEME_LEN+3))
   {
    /*
     * For Solaris, try looking up the device serial number or model...
@@ -518,7 +522,7 @@ open_device(const char *uri,		/* I - Device URI */
 	if ((fd = open(device, O_WRONLY | O_EXCL)) >= 0)
 	  backendGetDeviceID(fd, device_id, sizeof(device_id),
                              make_model, sizeof(make_model),
-			     "usb", device_uri, sizeof(device_uri));
+			     USB_SCHEME, device_uri, sizeof(device_uri));
 	else
 	{
 	 /*
