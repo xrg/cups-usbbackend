@@ -1,0 +1,2 @@
+# These rules create symlinks for the usb printers
+SUBSYSTEM=="usb",    KERNEL=="lp*" SYSFS{serial} == "*",  SYMLINK+="usb/by-id/lp-$attr{manufacturer}-$attr{product}-$attr{serial}"

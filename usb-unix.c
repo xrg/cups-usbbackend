@@ -291,18 +291,20 @@ list_devices(void)
    		if (strncmp(ep->d_name,"lp-",3))
    			continue;
    		if (ep->d_type == DT_CHR){
-   			fprintf(stderr,"DEBUG: found char %s\n",ep->d_name);
+   			//fprintf(stderr,"DEBUG: found char %s\n",ep->d_name);
    		}
    		else if (ep->d_type == DT_LNK){
-   			fprintf(stderr,"DEBUG: found link %s\n",ep->d_name);
+   			//fprintf(stderr,"DEBUG: found link %s\n",ep->d_name);
    		}
    		else
    			continue;
-		
+  		
 		sprintf(device, "/dev/usb/by-id/%s", ep->d_name);
 	
-		if ((fd = open(device, O_RDWR | O_EXCL)) < 0)
+		if ((fd = open(device, O_RDWR | O_EXCL)) < 0){
+			//fprintf(stderr,"DEBUG: Cannot open %s\n",device);
 			continue;
+		}
 		
 		if (!backendGetDeviceID(fd, device_id, sizeof(device_id),
 					make_model, sizeof(make_model),
@@ -313,8 +315,8 @@ list_devices(void)
 		close(fd);
    	}
    	closedir(dp);
-   }else
-   	fprintf(stderr,"No by-id folder exists.\n");
+   }/*else
+   	fprintf(stderr,"No by-id folder exists.\n");*/
 #elif defined(__sgi)
 #elif defined(__sun) && defined(ECPPIOC_GETDEVID)
   int	i;			/* Looping var */
