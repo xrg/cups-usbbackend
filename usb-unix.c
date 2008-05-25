@@ -42,6 +42,9 @@
 #  include <unistd.h>
 #  include <string.h>
 #  include <fcntl.h>
+#  include <dirent.h>
+#  include <sys/types.h>
+// # include <stdio.h>
 #endif /* __linux */
 
 #ifdef __sun
@@ -231,6 +234,9 @@ list_devices(void)
 	device_id[1024],		/* Device ID string */
 	device_uri[1024],		/* Device URI string */
 	make_model[1024];		/* Make and model */
+	
+  DIR *dp;
+  struct dirent *ep;
 
  /*
   * Try to open each USB device...
@@ -272,6 +278,39 @@ list_devices(void)
 
     close(fd);
   }
+  
+  /* List again the devices that appear in some udev-created dir.
+     TODO: this is Linux-only. should that appear in other platforms?
+   */
+   if (dp = opendir("/dev/usb/by-id")){
+   	while (ep = readdir(dp)){
+   		if (strncmp(ep->d_name,"lp-",3))
+   			continue;
+   		if (ep->d_type == DT_CHR){
+   			fprintf(stderr,"DEBUG: found char %s\n",ep->d_name);
+   		}
+   		else if (ep->d_type == DT_LNK){
+   			fprintf(stderr,"DEBUG: found link %s\n",ep->d_name);
+   		}
+   		else
+   			continue;
+		
+		sprintf(device, "/dev/usb/by-id/%s", ep->d_name);
+	
+		if ((fd = open(device, O_RDWR | O_EXCL)) < 0)
+			continue;
+		
+		if (!backendGetDeviceID(fd, device_id, sizeof(device_id),
+					make_model, sizeof(make_model),
+					"usb", NULL, 0))
+		printf("direct usb:%s \"%s\" \"%s USB #%d\"\n", device,
+			make_model, make_model, i + 1);
+
+		close(fd);
+   	}
+   	closedir(dp);
+   }else
+   	fprintf(stderr,"No by-id folder exists.\n");
 #elif defined(__sgi)
 #elif defined(__sun) && defined(ECPPIOC_GETDEVID)
   int	i;			/* Looping var */
