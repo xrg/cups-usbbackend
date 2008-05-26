@@ -1,10 +1,9 @@
-%define git_repodir /home/panosl/panos/build/
 %define git_repo cups-usbbackend
 %define git_head HEAD
 
 %define name cups-backend-usb2
 %define version 0.1
-%define release 1
+%define release %mkrel 1
 
 Name:		%{name}
 Version:	%{version}
