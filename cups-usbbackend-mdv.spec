@@ -2,7 +2,7 @@
 %define git_head HEAD
 
 %define name cups-backend-usb2
-%define version 0.1
+%define version 0.2
 %define release %mkrel 1
 
 Name:		%{name}

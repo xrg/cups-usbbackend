@@ -390,15 +390,19 @@ open_device(const char *uri,		/* I - Device URI */
     */
 
     if (*use_bc)
-      fd = open(uri + USB_SCHEME_LEN, O_RDWR | O_EXCL);
+      fd = open(uri + USB_SCHEME_LEN+1, O_RDWR | O_EXCL);
     else
       fd = -1;
 
     if (fd < 0)
     {
-      fd      = open(uri + USB_SCHEME_LEN, O_WRONLY | O_EXCL);
+      fd      = open(uri + USB_SCHEME_LEN+1, O_WRONLY | O_EXCL);
       *use_bc = 0;
     }
+
+    /*if(fd <0){
+    	fprintf(stderr,"ERROR: Could not open \"%s\".\n", uri + USB_SCHEME_LEN);
+    }*/
 
     return (fd);
   }
