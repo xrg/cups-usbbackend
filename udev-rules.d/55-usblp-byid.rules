@@ -1,2 +1,9 @@
+#USB by-id rules for printers
+
+# First, work around bogus name that Zebra printers have (has space)
+SUBSYSTEM=="usb",    KERNEL=="lp*", SYSFS{manufacturer} == "Zebra*", SYMLINK+="usb/by-id/lp-Zebra-$attr{product}-$attr{serial}", GOTO="Usblp-end"
+
 # These rules create symlinks for the usb printers
 SUBSYSTEM=="usb",    KERNEL=="lp*" SYSFS{serial} == "*",  SYMLINK+="usb/by-id/lp-$attr{manufacturer}-$attr{product}-$attr{serial}"
+
+LABEL="Usblp-end"
